@@ -14,6 +14,8 @@ use rtlola_interpreter::{
 };
 use std::fs;
 use crossbeam_channel::Receiver;
+use colored::*;
+
 pub struct RtlolaMonitor {
     start_time: Instant,
     monitor: QueuedMonitor<VectorFactory<Infallible, Vec<Value>>, OfflineMode<RelativeFloat>, TotalIncremental, RelativeFloat>,
@@ -98,62 +100,98 @@ impl RtlolaMonitor {
     pub fn process_event_with_cli_output(&mut self, inputs: Vec<Value>) -> Result<(), String> {
         let elapsed = self.start_time.elapsed();
         let ts = elapsed.as_secs_f64();
-
+    
         let verdict = self.process_event(inputs)?;
         let ir = self.monitor.ir();
         
         match verdict.kind {
             VerdictKind::Timed => {
-                println!("[{:.6}s][Trigger] Deadline reached", ts);
+                println!(
+                    "{} {}",
+                    format!("[{:.6}s]", ts),
+                    "[Trigger] Deadline reached".red()
+                );
             },
             VerdictKind::Event => {
-                println!("[{:.6}s] Processing new event", ts);
+                println!(
+                    "{} {}",
+                    format!("[{:.6}s]", ts),
+                    "Processing new event"
+                );
                 
                 for (idx, val) in verdict.verdict.inputs {
                     let input = &ir.inputs[idx];
-                    println!("[{:.6}s][Input][{}][Value] = {}", ts, input.name, val);
+                    println!(
+                        "{} {} {} {}",
+                        format!("[{:.6}s]", ts),
+                        "[Input]".cyan(),
+                        format!("[{}]", input.name).cyan(),
+                        format!("= {}", val)
+                    );
                 }
             },
         }
-
-          // Print outputs and triggers - matching the interpreter's style
-          for (out_idx, changes) in verdict.verdict.outputs {
+    
+        // Print outputs and triggers - matching the interpreter's style
+        for (out_idx, changes) in verdict.verdict.outputs {
             let output = &ir.outputs[out_idx];
             let (prefix, name) = match &output.kind {
                 OutputKind::NamedOutput(name) => {
-                    ("Output", format!("[Output][{}", name))
+                    ("Output", format!("[Output][{}]", name).blue())
                 },
                 OutputKind::Trigger(trigger_idx) => {
-                    ("Trigger", format!("[#{}", trigger_idx))
+                    ("Trigger", format!("[#{}]", trigger_idx).red())
                 },
             };
-
+    
             for change in changes {
                 match change {
                     Change::Spawn(param) => {
-                        println!("[{:.6}s]{}][Spawn] = {:?}", ts, name, param);
+                        println!(
+                            "{} {} {} {:?}",
+                            format!("[{:.6}s]", ts),
+                            name,
+                            "[Spawn]".purple(),
+                            param
+                        );
                     },
                     Change::Value(param, val) => {
-                        let is_output =  matches!(output.kind, OutputKind::NamedOutput(_));
+                        let is_output = matches!(output.kind, OutputKind::NamedOutput(_));
                         let is_trigger = matches!(output.kind, OutputKind::Trigger(_));
                        
                         if is_output {
-                            //print!("[{:.6}s]{}][Value] = ", ts, name);
-                            println!("[{:.6}s]{}][Value] = {}", ts, name, val);
+                            println!(
+                                "{} {} {} {}",
+                                format!("[{:.6}s]", ts),
+                                name,
+                                "[Value] = ".green(),
+                                val.to_string()
+                            );
                         }   
-                        // Handle trigger messages
+                        
                         if is_trigger {
-                         //print!("[{:.6}s]{}][Trigger] = ", ts, name);
-                           println!("[{:.6}s][Trigger]{}][Value] = {}", ts, name, val);
+                            println!(
+                                "{} {} {} {}",
+                                format!("[{:.6}s]", ts),
+                                "[Trigger]".red(),
+                                name,
+                                format!("= {}", val)
+                            );
                         }
                     },
                     Change::Close(param) => {
-                        println!("[{:.6}s]{}][Close] = {:?}", ts, name, param);
+                        println!(
+                            "{} {} {} {:?}",
+                            format!("[{:.6}s]", ts),
+                            name,
+                            "[Close]".yellow(),
+                            param
+                        );
                     },
                 }
             }
         }
-
+    
         Ok(())
     }
 

@@ -1,12 +1,13 @@
 input height: Float64
 input velocity: Float64
-input temperature: Float
+input temperature: Float64
 
 
 output is_falling := velocity < 0.0
 output is_rising := velocity > 0.0
 output height_above_ground := height > 0.0
 output hot := temperature > 30.0
+output hotInFar :=   temperature * 9.0/5.0 + 32.0 
 
 trigger is_falling "Ball is falling"
 trigger is_rising "Ball is rising"
