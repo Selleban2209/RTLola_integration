@@ -1,0 +1,21 @@
+[package]
+name = "rtlola_integration"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+rtlola-frontend = "0.7.0"
+rtlola-interpreter = "0.10.1"
+tempfile = "3.3"
+csv = "1.1"
+ordered-float = "3.0"
+crossbeam-channel = "0.5"
+thiserror = "1.0"
+anyhow = "1.0"
+rtlola-io-plugins = "0.2.0"
+
+
+[lib]
+name = "rtlola_integration"
+crate-type = ["staticlib"]      
