@@ -25,6 +25,9 @@ pub struct RtlolaMonitor {
 }
 
 impl RtlolaMonitor {
+    
+    const DEFAULT_THRESHOLD: f64 = 1e-6;
+
     pub fn new(spec_path: &str, timeout_ms: u64, input_names: &[&str]) -> Result<Self, String> {
 
 
@@ -126,7 +129,7 @@ impl RtlolaMonitor {
                         format!("[{:.6}s]", ts),
                         "[Input]".cyan(),
                         format!("[{}]", input.name).cyan(),
-                        format!("= {}", val)
+                        format!("= {}", self.format_number(val, Self::DEFAULT_THRESHOLD))
                     );
                 }
             },
@@ -165,7 +168,7 @@ impl RtlolaMonitor {
                                 format!("[{:.6}s]", ts),
                                 name,
                                 "[Value] = ".green(),
-                                val.to_string()
+                                self.format_number(val.clone(), Self::DEFAULT_THRESHOLD)
                             );
                         }   
                         
@@ -195,5 +198,27 @@ impl RtlolaMonitor {
         Ok(())
     }
 
+
+    pub fn format_number(&self, val: Value, threshold: f64) -> String {
+        match val {
+            Value::Float(f) => {
+                if f.abs() < threshold.abs() && f.abs() > 1e-10 {  // Handle negative thresholds
+                    if f == 0.0 {
+                        "0".to_string()
+                    } else {
+                        format!("{:.6e}", f.into_inner())
+                    }
+                }
+                else if f.abs() < 1e-10 {
+                    format!("{:.1}", 0.0)
+                }    
+                 else {
+                    format!("{:.6}", f)
+                }
+            },
+            // Other variants remain the same
+            _ => val.to_string(),
+        }
+    }
 
 }

@@ -16,7 +16,6 @@ pub struct RTLolaMonitorHandle {
 }
 */
 
-
 #[repr(C)]
 pub struct RTLolaMonitorHandle {
     inner: *mut c_void, // Opaque pointer to RtlolaMonitor
