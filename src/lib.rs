@@ -111,7 +111,7 @@ pub extern "C" fn rtlola_process_inputs(
         let value = match input.type_ {
             0 => Value::Unsigned(unsafe { input.value.uint64_val }),
             1 => Value::Signed(unsafe { input.value.int64_val }),
-            2 => Value::Float(NotNan::new(unsafe { input.value.float64_val }).unwrap()),
+            2 => Value::Float(NotNan::try_from(unsafe { input.value.float64_val }).unwrap()),
             3 => Value::Bool(unsafe { input.value.bool_val }),
             4 => {
                 let s = unsafe { CStr::from_ptr(input.value.string_val) };
@@ -123,7 +123,7 @@ pub extern "C" fn rtlola_process_inputs(
     }
 
     
-    (*monitor).process_event_with_cli_output(values).is_ok()
+    (*monitor).process_event_verdict(values).is_ok()
     
 }
 

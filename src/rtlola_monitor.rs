@@ -100,7 +100,7 @@ impl RtlolaMonitor {
             })
     }
 
-    pub fn process_event_with_cli_output(&mut self, inputs: Vec<Value>) -> Result<(), String> {
+    pub fn process_event_verdict(&mut self, inputs: Vec<Value>) -> Result<(), String> {
         let elapsed = self.start_time.elapsed();
         let ts = elapsed.as_secs_f64();
     

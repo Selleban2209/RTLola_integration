@@ -41,12 +41,12 @@ fn main() -> Result<(), String> {
                 height, velocity, temp);
 
         let inputs = vec![
-            Value::Float(NotNan::new(*height).unwrap()),
+            Value::Float(NotNan::try_from(*height).unwrap()),
             Value::Float(NotNan::new(*velocity).unwrap()),
             Value::Float(NotNan::new(*temp).unwrap()),
         ];
         
-        monitor.process_event_with_cli_output(inputs)?;
+        monitor.process_event_verdict(inputs)?;
         println!(); // Spacing
     }
 
