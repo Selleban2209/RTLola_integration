@@ -46,7 +46,10 @@ fn main() -> Result<(), String> {
             Value::Float(NotNan::new(*temp).unwrap()),
         ];
         
-        monitor.process_event_verdict(inputs)?;
+        match monitor.process_event_verdict(inputs) {
+            Ok(string_output) => println!("{}", string_output),
+            Err(e) => eprintln!("Error: {}", e),
+        }
         println!(); // Spacing
     }
 

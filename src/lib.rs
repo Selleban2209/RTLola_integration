@@ -96,17 +96,19 @@ pub extern "C" fn rtlola_process_inputs(
     handle: *mut RTLolaMonitorHandle,
     inputs: *const RTLolaInput,
     num_inputs: usize,
-    time: c_double
-) -> bool {
+    time: c_double,
+) -> *mut c_char {
+    // Null check inputs
     if handle.is_null() || inputs.is_null() {
-        return false;
+        return std::ptr::null_mut();
     }
 
-    let monitor = unsafe { &mut *( (*(handle as *mut RTLolaMonitorHandle)).inner as *mut RtlolaMonitor) };
+    // Safe access to monitor (assuming your struct is properly designed)
+    let monitor = unsafe { &mut *((*(handle as *mut RTLolaMonitorHandle)).inner as *mut RtlolaMonitor) };
     let inputs_slice = unsafe { std::slice::from_raw_parts(inputs, num_inputs) };
 
+    // Convert inputs to Values
     let mut values = Vec::with_capacity(num_inputs);
-
     for input in inputs_slice {
         let value = match input.type_ {
             0 => Value::Unsigned(unsafe { input.value.uint64_val }),
@@ -117,14 +119,36 @@ pub extern "C" fn rtlola_process_inputs(
                 let s = unsafe { CStr::from_ptr(input.value.string_val) };
                 Value::Str(s.to_string_lossy().into_owned().into())
             },
-            _ => return false, // Invalid type
+            _ => return std::ptr::null_mut(), // Invalid type
         };
         values.push(value);
     }
 
-    
-    (*monitor).process_event_verdict(values).is_ok()
-    
+    // Process the event and get the result string
+    match monitor.process_event_verdict(values) {
+        Ok(output_str) => {
+            // Convert Rust String to C-compatible string
+            match CString::new(output_str) {
+                Ok(c_string) => c_string.into_raw(),
+                Err(_) => std::ptr::null_mut(),
+            }
+        },
+        Err(err_str) => {
+            // Convert error string to C-compatible string
+            match CString::new(err_str) {
+                Ok(c_string) => c_string.into_raw(),
+                Err(_) => std::ptr::null_mut(),
+            }
+        }
+    }
+}
+
+// Function to free the string memory
+#[unsafe(no_mangle)]
+pub extern "C" fn rtlola_free_string(s: *mut c_char) {
+    if !s.is_null() {
+        unsafe { CString::from_raw(s) };
+    }
 }
 
 #[unsafe(no_mangle)]

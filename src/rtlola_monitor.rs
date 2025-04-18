@@ -100,102 +100,104 @@ impl RtlolaMonitor {
             })
     }
 
-    pub fn process_event_verdict(&mut self, inputs: Vec<Value>) -> Result<(), String> {
+    pub fn process_event_verdict(&mut self, inputs: Vec<Value>) -> Result<String, String> {
         let elapsed = self.start_time.elapsed();
         let ts = elapsed.as_secs_f64();
-    
+        
         let verdict = self.process_event(inputs)?;
         let ir = self.monitor.ir();
         
+        // Main output string with color codes
+        let mut string_output = String::new();
+        
         match verdict.kind {
             VerdictKind::Timed => {
-                println!(
-                    "{} {}",
+                string_output.push_str(&format!(
+                    "{} {}\n",
                     format!("[{:.6}s]", ts),
-                    "[Trigger] Deadline reached".red()
-                );
+                    "[Trigger] Deadline reached".red().to_string()
+                ));
             },
             VerdictKind::Event => {
-                println!(
-                    "{} {}",
+                string_output.push_str(&format!(
+                    "{} {}\n",
                     format!("[{:.6}s]", ts),
                     "Processing new event"
-                );
+                ));
                 
                 for (idx, val) in verdict.verdict.inputs {
                     let input = &ir.inputs[idx];
-                    println!(
-                        "{} {} {} {}",
+                    string_output.push_str(&format!(
+                        "{} {} {} {}\n",
                         format!("[{:.6}s]", ts),
-                        "[Input]".cyan(),
-                        format!("[{}]", input.name).cyan(),
+                        "[Input]".cyan().to_string(),
+                        format!("[{}]", input.name).cyan().to_string(),
                         format!("= {}", self.format_number(val, Self::DEFAULT_THRESHOLD))
-                    );
+                    ));
                 }
             },
         }
     
-        // Print outputs and triggers - matching the interpreter's style
         for (out_idx, changes) in verdict.verdict.outputs {
             let output = &ir.outputs[out_idx];
             let (prefix, name) = match &output.kind {
                 OutputKind::NamedOutput(name) => {
-                    ("Output", format!("[Output][{}]", name).blue())
+                    ("Output", format!("[Output][{}]", name).blue().to_string())
                 },
                 OutputKind::Trigger(trigger_idx) => {
-                    ("Trigger", format!("[#{}]", trigger_idx).red())
+                    ("Trigger", format!("[#{}]", trigger_idx).red().to_string())
                 },
             };
     
             for change in changes {
                 match change {
                     Change::Spawn(param) => {
-                        println!(
-                            "{} {} {} {:?}",
+                        string_output.push_str(&format!(
+                            "{} {} {} {:?}\n",
                             format!("[{:.6}s]", ts),
                             name,
-                            "[Spawn]".purple(),
+                            "[Spawn]".purple().to_string(),
                             param
-                        );
+                        ));
                     },
                     Change::Value(param, val) => {
                         let is_output = matches!(output.kind, OutputKind::NamedOutput(_));
                         let is_trigger = matches!(output.kind, OutputKind::Trigger(_));
                        
                         if is_output {
-                            println!(
-                                "{} {} {} {}",
+                            string_output.push_str(&format!(
+                                "{} {} {} {}\n",
                                 format!("[{:.6}s]", ts),
                                 name,
-                                "[Value] = ".green(),
+                                "[Value] = ".green().to_string(),
                                 self.format_number(val.clone(), Self::DEFAULT_THRESHOLD)
-                            );
+                            ));
                         }   
                         
                         if is_trigger {
-                            println!(
-                                "{} {} {} {}",
+                            string_output.push_str(&format!(
+                                "{} {} {} {}\n",
                                 format!("[{:.6}s]", ts),
-                                "[Trigger]".red(),
+                                "[Trigger]".red().to_string(),
                                 name,
                                 format!("= {}", val)
-                            );
+                            ));
                         }
                     },
                     Change::Close(param) => {
-                        println!(
-                            "{} {} {} {:?}",
+                        string_output.push_str(&format!(
+                            "{} {} {} {:?}\n",
                             format!("[{:.6}s]", ts),
                             name,
-                            "[Close]".yellow(),
+                            "[Close]".yellow().to_string(),
                             param
-                        );
+                        ));
                     },
                 }
             }
         }
     
-        Ok(())
+        Ok(string_output)  // Explicitly return our built string
     }
 
 
