@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::time::{Duration, Instant};
 use std::convert::Infallible;
+use ordered_float::Float;
 use rtlola_frontend::mir::InputReference;
 use rtlola_frontend::ParserConfig;
 use rtlola_interpreter::input::VectorFactory;
@@ -80,7 +81,7 @@ impl RtlolaMonitor {
             .map_err(|e| format!("Failed to start monitor: {:?}", e))
     }
 
-    pub fn process_event(&mut self, inputs: Vec<Value>) -> Result<QueuedVerdict<TotalIncremental, RelativeFloat>, String> {
+    pub fn process_event(&mut self, inputs: Vec<Value>, current_time: Option<std::time::Duration> ) -> Result<QueuedVerdict<TotalIncremental, RelativeFloat>, String> {
         if inputs.len() != self.input_names.len() {
             return Err(format!(
                 "Expected {} inputs, got {}",
@@ -88,8 +89,27 @@ impl RtlolaMonitor {
                 inputs.len()
             ));
         }
+        /*
+        i want it so that if this function is calle dike this 
+        self.process_event(inputs,Null)?;
+        then let elapsed = self.start_time.elapsed();
+        
+        but if 
+        self.process_event(inputs,current_time)?;
+        then let elapsed = current_time;
 
+        
+         */
+
+        
+        let elapsed = match current_time {
+        Some(time) => time,
+        None => self.start_time.elapsed(),
+        };
         let elapsed = self.start_time.elapsed();
+
+        let test: u64 = 20.0 as u64;
+
         self.monitor.accept_event(inputs, elapsed)
             .map_err(|e| format!("Failed to accept event: {:?}", e))?;
             
@@ -100,13 +120,16 @@ impl RtlolaMonitor {
             })
     }
 
-    pub fn process_event_verdict(&mut self, inputs: Vec<Value>) -> Result<String, String> {
-        let elapsed = self.start_time.elapsed();
+    pub fn process_event_verdict(&mut self, inputs: Vec<Value>, current_time: Option<f64> ) -> Result<String, String> {
+        let elapsed = match current_time {
+            Some(seconds) => std::time::Duration::from_secs_f64(seconds),
+            None => self.start_time.elapsed()
+        };
+        let verdict = self.process_event(inputs,Some(elapsed))?;
+        let ir = self.monitor.ir();
         let ts = elapsed.as_secs_f64();
         
-        let verdict = self.process_event(inputs)?;
-        let ir = self.monitor.ir();
-        
+       
         // Main output string with color codes
         let mut string_output = String::new();
         

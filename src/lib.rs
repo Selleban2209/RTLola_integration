@@ -2,7 +2,7 @@ use std::convert::Infallible;
 use std::os::raw::{c_char, c_double, c_ulong, c_long, c_int, c_longlong, c_ulonglong, c_void};
 use std::ffi::{CStr, CString};
 use std::time::Instant;
-
+use std::result::Result::{Ok, Err};
 use ordered_float::NotNan;
 use rtlola_interpreter::Value;
 use rtlola_monitor::RtlolaMonitor;
@@ -113,7 +113,7 @@ pub extern "C" fn rtlola_process_inputs(
         let value = match input.type_ {
             0 => Value::Unsigned(unsafe { input.value.uint64_val }),
             1 => Value::Signed(unsafe { input.value.int64_val }),
-            2 => Value::Float(NotNan::try_from(unsafe { input.value.float64_val }).unwrap()),
+            2 => Value::Float(NotNan::try_from(unsafe { input.value.float64_val }).unwrap_or_default()),
             3 => Value::Bool(unsafe { input.value.bool_val }),
             4 => {
                 let s = unsafe { CStr::from_ptr(input.value.string_val) };
@@ -123,9 +123,10 @@ pub extern "C" fn rtlola_process_inputs(
         };
         values.push(value);
     }
-
+    
+    let currre_time = time as f64;
     // Process the event and get the result string
-    match monitor.process_event_verdict(values) {
+    match monitor.process_event_verdict(values, Some(currre_time)) {
         Ok(output_str) => {
             // Convert Rust String to C-compatible string
             match CString::new(output_str) {

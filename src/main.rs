@@ -45,8 +45,8 @@ fn main() -> Result<(), String> {
             Value::Float(NotNan::new(*velocity).unwrap()),
             Value::Float(NotNan::new(*temp).unwrap()),
         ];
-        
-        match monitor.process_event_verdict(inputs) {
+        //let elapsed_test = 0.93222 as f64;  // Gives 922200
+        match monitor.process_event_verdict(inputs, None) {
             Ok(string_output) => println!("{}", string_output),
             Err(e) => eprintln!("Error: {}", e),
         }
