@@ -89,18 +89,6 @@ impl RtlolaMonitor {
                 inputs.len()
             ));
         }
-        /*
-        i want it so that if this function is calle dike this 
-        self.process_event(inputs,Null)?;
-        then let elapsed = self.start_time.elapsed();
-        
-        but if 
-        self.process_event(inputs,current_time)?;
-        then let elapsed = current_time;
-
-        
-         */
-
         
         let elapsed = match current_time {
         Some(time) => time,
