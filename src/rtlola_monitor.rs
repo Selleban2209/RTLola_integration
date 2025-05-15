@@ -81,6 +81,7 @@ impl RtlolaMonitor {
             .map_err(|e| format!("Failed to start monitor: {:?}", e))
     }
 
+    // Process an event with the given inputs and current time
     pub fn process_event(&mut self, inputs: Vec<Value>, current_time: Option<std::time::Duration> ) -> Result<QueuedVerdict<TotalIncremental, RelativeFloat>, String> {
         if inputs.len() != self.input_names.len() {
             return Err(format!(
@@ -108,6 +109,7 @@ impl RtlolaMonitor {
             })
     }
 
+    // Process an event and return a formatted string with the verdict
     pub fn process_event_verdict(&mut self, inputs: Vec<Value>, current_time: Option<f64> ) -> Result<String, String> {
         let elapsed = match current_time {
             Some(seconds) => std::time::Duration::from_secs_f64(seconds),
