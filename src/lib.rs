@@ -18,7 +18,7 @@ pub struct RTLolaMonitorHandle {
 
 #[repr(C)]
 pub struct RTLolaMonitorHandle {
-    inner: *mut c_void, // Opaque pointer to RtlolaMonitor
+    inner: *mut c_void, // pointer to RtlolaMonitor
     
 }
 
@@ -79,10 +79,10 @@ pub extern "C" fn rtlola_monitor_new(
         }
     };
 
-    // Box the monitor to store on the heap
+    // Box the monitor 
     let boxed_monitor = Box::new(monitor);
     
-    // Create the handle with an opaque pointer to the monitor
+    // Create the handle with a pointer to the monitor
     let handle = Box::new(RTLolaMonitorHandle {
         inner: Box::into_raw(boxed_monitor) as *mut c_void
     });
@@ -103,7 +103,7 @@ pub extern "C" fn rtlola_process_inputs(
         return std::ptr::null_mut();
     }
 
-    // Safe access to monitor (assuming your struct is properly designed)
+    // Safe access to monitor 
     let monitor = unsafe { &mut *((*(handle as *mut RTLolaMonitorHandle)).inner as *mut RtlolaMonitor) };
     let inputs_slice = unsafe { std::slice::from_raw_parts(inputs, num_inputs) };
 
